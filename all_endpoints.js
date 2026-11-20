@@ -1,13 +1,13 @@
 
 import http from "k6/http";
 import { check, sleep } from "k6";
-import { Counter } from "k6/metrics";
+import { Counter, Trend } from "k6/metrics";
 import exec from "k6/execution";
 
 const base_url = "https://staging.codegnan.com";
 
 // ==================================================
-// 2. WEBSITE URL ENDPOINTS
+// 1. WEBSITE URL ENDPOINTS
 // Total: 289 URL entries
 // ==================================================
 
@@ -301,23 +301,24 @@ const urls = [
     "/author/jituthecoder/",
     "/author/sairam/",
     "/author/snigdhabiswas/",
+
 ];
 
 // ==================================================
-// 3. TEST CONFIGURATION
+// 2. TEST CONFIGURATION
 // ==================================================
 
 const TYPE = __ENV.TYPE || "load";
 const LOG_EVERY_REQUEST = __ENV.LOG !== "off";
 
 const TOTAL_VUS = 10;
-const TOTAL_CYCLES = 1;
+const TOTAL_CYCLES = 3;
 
 const TOTAL_URLS = urls.length;
 const TOTAL_ITERATIONS = TOTAL_URLS * TOTAL_CYCLES;
 
 // ==================================================
-// 4. VALIDATION
+// 3. VALIDATION
 // ==================================================
 
 if (!base_url || TOTAL_URLS === 0) {
@@ -333,7 +334,6 @@ if (TOTAL_URLS !== EXPECTED_URLS) {
 }
 
 // Duplicate paths are allowed.
-// The /blogs/ endpoint appears twice in the supplied list.
 const uniqueURLCount = new Set(urls).size;
 
 if (uniqueURLCount !== TOTAL_URLS) {
@@ -347,7 +347,7 @@ if (TYPE !== "load") {
 }
 
 // ==================================================
-// 5. SCENARIO CONFIGURATION
+// 4. SCENARIO CONFIGURATION
 // ==================================================
 
 const scenarios = {
@@ -359,7 +359,7 @@ const scenarios = {
 };
 
 // ==================================================
-// 6. THRESHOLDS
+// 5. THRESHOLDS
 // ==================================================
 
 const thresholds = {
@@ -387,7 +387,7 @@ const thresholds = {
 };
 
 // ==================================================
-// 7. K6 OPTIONS
+// 6. K6 OPTIONS
 // ==================================================
 
 export const options = {
@@ -409,20 +409,57 @@ export const options = {
 };
 
 // ==================================================
-// 8. CUSTOM COUNTERS
+// 7. CUSTOM METRICS
 // ==================================================
 
 const requestCounter = new Counter("endpoint_requests");
 const successCounter = new Counter("success_requests");
 const failCounter = new Counter("failed_requests");
+
 const gateway504Counter = new Counter("gateway_504_errors");
 const clientTimeoutCounter = new Counter("client_timeouts");
+
+// Captures response time and H1 details in JSON output.
+const h1Capture = new Trend("endpoint_h1_capture");
+
+// ==================================================
+// 8. H1 EXTRACTION FUNCTION
+// ==================================================
+
+function extractH1(html) {
+
+    if (!html) {
+        return "H1_NOT_FOUND";
+    }
+
+    const match = html.match(
+        /<h1\b[^>]*>([\s\S]*?)<\/h1>/i
+    );
+
+    if (!match) {
+        return "H1_NOT_FOUND";
+    }
+
+    const h1Text = match[1]
+        .replace(/<[^>]*>/g, " ")
+        .replace(/&nbsp;/gi, " ")
+        .replace(/&amp;/gi, "&")
+        .replace(/&quot;/gi, '"')
+        .replace(/&#39;/gi, "'")
+        .replace(/&lt;/gi, "<")
+        .replace(/&gt;/gi, ">")
+        .replace(/\s+/g, " ")
+        .trim();
+
+    return h1Text || "H1_EMPTY";
+}
 
 // ==================================================
 // 9. SETUP
 // ==================================================
 
 export function setup() {
+
     console.log("==========================================");
     console.log("       WEBSITE LOAD TEST STARTED");
     console.log("==========================================");
@@ -446,32 +483,33 @@ export function setup() {
 // ==================================================
 
 export default function (data) {
-    // Global iteration number (zero-based)
+
+    // Global iteration number (zero-based).
     const iteration = exec.scenario.iterationInTest;
 
-    // Round-robin URL selection
+    // Round-robin URL selection.
     const urlIndex = iteration % TOTAL_URLS;
 
-    // Current cycle number
+    // Current cycle number.
     const cycleNumber =
         Math.floor(iteration / TOTAL_URLS) + 1;
 
-    // Current URL number
+    // Current URL number.
     const urlNumber = urlIndex + 1;
 
-    // Select endpoint
+    // Select endpoint.
     const endpoint_path = urls[urlIndex];
     const target_url = `${base_url}${endpoint_path}`;
 
-    // Global request number
+    // Global request number.
     const requestNo = iteration + 1;
 
-    // Elapsed time
+    // Elapsed time.
     const elapsed = (
         (Date.now() - data.startTime) / 1000
     ).toFixed(1);
 
-    // Active VUs
+    // Active VUs.
     const activeVUs = exec.instance.vusActive;
 
     // ==================================================
@@ -479,6 +517,7 @@ export default function (data) {
     // ==================================================
 
     const response = http.get(target_url, {
+
         tags: {
             endpoint: endpoint_path,
             url_number: String(urlNumber),
@@ -518,10 +557,37 @@ export default function (data) {
         `${ms} ms`;
 
     // ==================================================
+    // EXTRACT H1 TAG
+    // ==================================================
+
+    const h1Tag = extractH1(response.body);
+
+    // Save H1 details as a custom Trend metric.
+    // Each JSON Point contains the response time as its value
+    // and the URL, H1, status, and cycle as tags.
+
+    h1Capture.add(ms, {
+
+        url: endpoint_path,
+        h1_tag: h1Tag,
+        status: String(response.status),
+        cycle: String(cycleNumber),
+        url_number: String(urlNumber),
+
+    });
+
+    if (LOG_EVERY_REQUEST) {
+        console.log(
+            `[H1] ${endpoint_path} | ${h1Tag}`
+        );
+    }
+
+    // ==================================================
     // ERROR HANDLING
     // ==================================================
 
     if (response.status === 504) {
+
         gateway504Counter.add(1);
 
         console.error(
@@ -529,6 +595,7 @@ export default function (data) {
         );
 
     } else if (response.status === 0) {
+
         clientTimeoutCounter.add(1);
 
         console.error(
@@ -536,6 +603,7 @@ export default function (data) {
         );
 
     } else if (ok) {
+
         if (LOG_EVERY_REQUEST) {
             console.log(
                 `[OK] ${time} | ${info} | Status ${response.status}`
@@ -543,6 +611,7 @@ export default function (data) {
         }
 
     } else {
+
         console.error(
             `[FAIL] ${time} | ${info} | Status ${response.status}`
         );
@@ -560,6 +629,7 @@ export default function (data) {
 // ==================================================
 
 export function handleSummary(data) {
+
     const metrics = data.metrics;
 
     const totalRequests =
@@ -587,28 +657,36 @@ export function handleSummary(data) {
         metrics.checks?.values?.rate || 0;
 
     const report = {
+
         test_configuration: {
+
             total_urls: TOTAL_URLS,
             virtual_users: TOTAL_VUS,
             total_cycles: TOTAL_CYCLES,
             requests_per_url: TOTAL_CYCLES,
             expected_total_requests: TOTAL_ITERATIONS,
+
         },
 
         request_summary: {
+
             total_requests: totalRequests,
             successful_requests: successfulRequests,
             failed_requests: failedRequests,
             failed_rate: failedRate,
             check_pass_rate: checkRate,
+
         },
 
         error_summary: {
+
             gateway_504_errors: gateway504Errors,
             client_timeouts: clientTimeouts,
+
         },
 
         response_time_ms: {
+
             average: duration.avg || 0,
             minimum: duration.min || 0,
             median: duration.med || 0,
@@ -616,9 +694,11 @@ export function handleSummary(data) {
             p90: duration["p(90)"] || 0,
             p95: duration["p(95)"] || 0,
             p99: duration["p(99)"] || 0,
+
         },
 
         threshold_validation: {
+
             p90: duration["p(90)"] < 1000,
             p95: duration["p(95)"] < 1000,
             p99: duration["p(99)"] < 1000,
@@ -626,14 +706,22 @@ export function handleSummary(data) {
             checks: checkRate > 0.99,
             gateway_504: gateway504Errors === 0,
             client_timeouts: clientTimeouts === 0,
+
         },
+
     };
 
     console.log("\n========== FINAL LOAD TEST REPORT ==========\n");
-    console.log(JSON.stringify(report, null, 4));
+
+    console.log(
+        JSON.stringify(report, null, 4)
+    );
+
     console.log("\n============================================\n");
 
     return {
+
         "final_report.json": JSON.stringify(report, null, 4),
+
     };
 }

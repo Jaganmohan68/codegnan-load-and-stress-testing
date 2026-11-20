@@ -2,29 +2,29 @@
     "test_configuration": {
         "total_urls": 289,
         "virtual_users": 10,
-        "total_cycles": 1,
-        "requests_per_url": 1,
-        "expected_total_requests": 289
+        "total_cycles": 3,
+        "requests_per_url": 3,
+        "expected_total_requests": 867
     },
     "request_summary": {
-        "total_requests": 289,
-        "successful_requests": 271,
-        "failed_requests": 18,
-        "failed_rate": 0.05357142857142857,
-        "check_pass_rate": 0.9377162629757786
+        "total_requests": 867,
+        "successful_requests": 847,
+        "failed_requests": 20,
+        "failed_rate": 0.019880715705765408,
+        "check_pass_rate": 0.9769319492502884
     },
     "error_summary": {
         "gateway_504_errors": 0,
-        "client_timeouts": 18
+        "client_timeouts": 20
     },
     "response_time_ms": {
-        "average": 5999.488972321431,
+        "average": 1331.3446800198794,
         "minimum": 0,
-        "median": 7314.74115,
-        "maximum": 20107.5266,
-        "p90": 10275.7841,
-        "p95": 12687.5992,
-        "p99": 16898.618094999994
+        "median": 662.9243,
+        "maximum": 30001.8751,
+        "p90": 2715.12545,
+        "p95": 4186.84745,
+        "p99": 12965.728935000008
     },
     "threshold_validation": {
         "p90": false,
