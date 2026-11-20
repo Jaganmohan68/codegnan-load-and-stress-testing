@@ -8,23 +8,23 @@
     },
     "request_summary": {
         "total_requests": 867,
-        "successful_requests": 847,
-        "failed_requests": 20,
-        "failed_rate": 0.019880715705765408,
-        "check_pass_rate": 0.9769319492502884
+        "successful_requests": 842,
+        "failed_requests": 25,
+        "failed_rate": 0.024777006937561942,
+        "check_pass_rate": 0.9711649365628604
     },
     "error_summary": {
         "gateway_504_errors": 0,
-        "client_timeouts": 20
+        "client_timeouts": 25
     },
     "response_time_ms": {
-        "average": 1331.3446800198794,
+        "average": 2294.4756651139774,
         "minimum": 0,
-        "median": 662.9243,
-        "maximum": 30001.8751,
-        "p90": 2715.12545,
-        "p95": 4186.84745,
-        "p99": 12965.728935000008
+        "median": 455.2059,
+        "maximum": 14291.6773,
+        "p90": 8890.19968,
+        "p95": 9781.76866,
+        "p99": 10864.737028
     },
     "threshold_validation": {
         "p90": false,

@@ -158,7 +158,7 @@ const urls = [
     "/software-testing-course-syllabus/",
     "/python-full-stack-developer-course-syllabus/",
     "/machine-learning-course-syllabus/",
-    "/java-career-paths/",
+    "/java-career-paths/",  //we have to check the h1 of this page
     "/data-science-career-paths/",
     "/software-testing-career-paths/",
     "/machine-learning-career-path/",
@@ -617,10 +617,7 @@ export default function (data) {
         );
     }
 
-    // ==================================================
-    // WAIT BEFORE NEXT REQUEST
-    // ==================================================
-
+    
     sleep(1);
 }
 
