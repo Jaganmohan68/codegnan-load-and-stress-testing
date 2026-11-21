@@ -15014,7 +15014,11 @@
 {"metric":"checks","type":"Point","data":{"time":"2026-11-20T14:35:44.0095598+05:30","value":1,"tags":{"check":"status is 200","group":"","scenario":"load"}}}
 {"metric":"success_requests","type":"Point","data":{"time":"2026-11-20T14:35:44.010262+05:30","value":1,"tags":{"group":"","scenario":"load"}}}
 {"metric":"failed_requests","type":"Point","data":{"time":"2026-11-20T14:35:44.010262+05:30","value":0,"tags":{"group":"","scenario":"load"}}}
-{"metric":"endpoint_h1_capture","type":"Point","data":{"time":"2026-11-20T14:35:44.0144293+05:30","value":232,"tags":{"cycle":"3","group":"","h1_tag":"Agentic AI Explained: Beginner’s Guide to Agentic AI (2026)","scenario":"load","status":"200","url":"/blogs/agentic-ai-beginners-guide/","url_number":"168"}}}
+{"metric":"endpoint_h1_capture","type":"Point","data":
+    {"time":"2026-11-20T14:35:44.0144293+05:30","value":232,"tags":
+        {"cycle":"3","group":"",
+            "h1_tag":"Agentic AI Explained: Beginner’s Guide to Agentic AI (2026)"
+                        ,"scenario":"load","status":"200","url":"/blogs/agentic-ai-beginners-guide/","url_number":"168"}}}
 {"metric":"vus","type":"Point","data":{"time":"2026-11-20T14:35:44.1076292+05:30","value":10,"tags":{}}}
 {"metric":"vus_max","type":"Point","data":{"time":"2026-11-20T14:35:44.1076292+05:30","value":10,"tags":{}}}
 {"metric":"data_sent","type":"Point","data":{"time":"2026-11-20T14:35:44.1273857+05:30","value":159,"tags":{"group":"","scenario":"load"}}}
