@@ -1,0 +1,46 @@
+{
+    "test_name": "Stage 2 - Endpoint Load Test",
+    "test_configuration": {
+        "stage": 2,
+        "base_url": "https://staging.codegnan.com",
+        "virtual_users": 10,
+        "duration_seconds": 60,
+        "total_endpoints": 10,
+        "requests_per_vu": 2,
+        "request_interval_seconds": 30,
+        "expected_total_requests": 20,
+        "actual_total_requests": 20,
+        "endpoint_assignment": "One fixed endpoint per VU"
+    },
+    "request_summary": {
+        "total_requests": 20,
+        "successful_requests": 20,
+        "failed_requests": 0,
+        "failed_rate": 0,
+        "check_pass_rate": 1
+    },
+    "error_summary": {
+        "gateway_504_errors": 0,
+        "client_timeouts": 0,
+        "transport_errors": 0
+    },
+    "response_time_ms": {
+        "average": 167.27129000000005,
+        "minimum": 141.084,
+        "median": 160.83384999999998,
+        "maximum": 219.5086,
+        "p90": 198.04327,
+        "p95": 208.77008500000002,
+        "p99": 217.360897
+    },
+    "threshold_validation": {
+        "expected_request_count": true,
+        "p90_below_1000ms": true,
+        "p95_below_1000ms": true,
+        "p99_below_1000ms": true,
+        "failed_rate_below_1_percent": true,
+        "checks_above_99_percent": true,
+        "zero_504_errors": true,
+        "zero_client_timeouts": true
+    }
+}

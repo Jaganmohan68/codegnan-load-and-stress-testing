@@ -1,4 +1,3 @@
-
 import http from "k6/http";
 import { check, sleep } from "k6";
 import { Counter, Trend } from "k6/metrics";
@@ -12,164 +11,107 @@ const TEST_DURATION_SECONDS = 60;
 const STAGE = Number(__ENV.STAGE || 1);
 
 if (!Number.isInteger(STAGE) || STAGE < 1) {
-    throw new Error("STAGE must be a positive integer.");
+  throw new Error("STAGE must be a positive integer.");
 }
 
-// Each VU sends STAGE requests.
-// Example: Stage 3 = 3 requests per VU.
-
 const REQUESTS_PER_VU = STAGE;
+const EXPECTED_TOTAL_REQUESTS = TOTAL_VUS * REQUESTS_PER_VU;
 
-const EXPECTED_REQUESTS = TOTAL_VUS * REQUESTS_PER_VU;
-
-// Distribute requests evenly across 60 seconds.
-// Stage 1 = 60 seconds
-// Stage 2 = 30 seconds
-// Stage 3 = 20 seconds
-// Stage 4 = 15 seconds
-
-const REQUEST_INTERVAL =
-    TEST_DURATION_SECONDS / REQUESTS_PER_VU;
-
-// ==================================================
-// 2. FIRST 10 ENDPOINTS
-// ==================================================
+const REQUEST_INTERVAL = TEST_DURATION_SECONDS / REQUESTS_PER_VU;
 
 const urls = [
-    "/testimonials/",
-    "/bangalore/",
-    "/learn-software-testing/",
-    "/sairam-uppugundla/",
-    "/kishor-kumar/",
-    "/learn-data-science/",
-    "/refunds-cancellations/",
-    "/jitendra-chautharia/",
-    "/learn-machine-learning/",
-    "/our-team/",
+  "/testimonials/",
+  "/bangalore/",
+  "/learn-software-testing/",
+  "/sairam-uppugundla/",
+  "/kishor-kumar/",
+  "/learn-data-science/",
+  "/refunds-cancellations/",
+  "/jitendra-chautharia/",
+  "/learn-machine-learning/",
+  "/our-team/",
 ];
 
 if (urls.length !== TOTAL_VUS) {
-    throw new Error(
-        `Expected ${TOTAL_VUS} endpoints, found ${urls.length}.`
-    );
+  throw new Error(`Expected ${TOTAL_VUS} URLs, but found ${urls.length}`);
 }
 
 if (new Set(urls).size !== urls.length) {
-    throw new Error("Duplicate endpoints found.");
+  throw new Error("Duplicate endpoints found.");
 }
 
 // ==================================================
-// 3. K6 OPTIONS
+// 3. CUSTOM METRICS
+// ==================================================
+
+const totalRequests = new Counter("total_requests");
+const successfulRequests = new Counter("successful_requests");
+const failedRequests = new Counter("failed_requests");
+
+const gateway504Errors = new Counter("gateway_504_errors");
+const clientTimeouts = new Counter("client_timeouts");
+const transportErrors = new Counter("transport_errors");
+
+const responseTime = new Trend("overall_response_time", true);
+
+// Separate endpoint response-time metrics
+const endpointTrends = urls.map((url, index) => ({
+  endpoint: url,
+  metric: new Trend(`endpoint_${index + 1}_response_time`, true),
+}));
+
+// ==================================================
+// 4. K6 OPTIONS
 // ==================================================
 
 export const options = {
-
-    scenarios: {
-
-        stage_load_test: {
-
-            executor: "per-vu-iterations",
-
-            vus: TOTAL_VUS,
-
-            iterations: REQUESTS_PER_VU,
-
-            // Allow enough time for the final interval
-            // and for slow HTTP responses.
-            maxDuration: "2m",
-        },
+  scenarios: {
+    stage_load_test: {
+      executor: "per-vu-iterations",
+      vus: TOTAL_VUS,
+      iterations: REQUESTS_PER_VU,
+      maxDuration: "5m",
     },
+  },
 
-    thresholds: {
+  thresholds: {
+    http_req_duration: ["p(90)<1000", "p(95)<1000", "p(99)<1000"],
 
-        http_req_duration: [
-            "p(90)<1000",
-            "p(95)<1000",
-            "p(99)<1000",
-        ],
+    http_req_failed: ["rate<0.01"],
+    checks: ["rate>0.99"],
 
-        http_req_failed: [
-            "rate<0.01",
-        ],
+    gateway_504_errors: ["count==0"],
+    client_timeouts: ["count==0"],
+  },
 
-        checks: [
-            "rate>0.99",
-        ],
-
-        gateway_504_errors: [
-            "count==0",
-        ],
-
-        client_timeouts: [
-            "count==0",
-        ],
-    },
-
-    summaryTrendStats: [
-        "avg",
-        "min",
-        "med",
-        "max",
-        "p(90)",
-        "p(95)",
-        "p(99)",
-    ],
+  summaryTrendStats: ["avg", "min", "med", "max", "p(90)", "p(95)", "p(99)"],
 };
 
 // ==================================================
-// 4. CUSTOM METRICS
+// 5. HELPER FUNCTIONS
 // ==================================================
 
-const requestCounter = new Counter("endpoint_requests");
+function round(value, decimals = 2) {
+  if (value === null || value === undefined || !Number.isFinite(value)) {
+    return null;
+  }
 
-const successCounter = new Counter("successful_requests");
+  return Number(value.toFixed(decimals));
+}
 
-const failureCounter = new Counter("failed_requests");
+function getMetricValue(data, metricName, statistic) {
+  const metric = data.metrics[metricName];
 
-const gateway504Counter = new Counter("gateway_504_errors");
+  if (!metric || !metric.values) {
+    return null;
+  }
 
-const clientTimeoutCounter = new Counter("client_timeouts");
+  return round(metric.values[statistic]);
+}
 
-const transportErrorCounter = new Counter("transport_errors");
-
-const endpointResponseTime = new Trend(
-    "endpoint_response_time",
-    true
-);
-
-const h1Capture = new Trend(
-    "endpoint_h1_capture",
-    true
-);
-
-// ==================================================
-// 5. H1 EXTRACTION
-// ==================================================
-
-function extractH1(html) {
-
-    if (!html) {
-        return "H1_NOT_FOUND";
-    }
-
-    const match = html.match(
-        /<h1\b[^>]*>([\s\S]*?)<\/h1>/i
-    );
-
-    if (!match) {
-        return "H1_NOT_FOUND";
-    }
-
-    return match[1]
-        .replace(/<[^>]*>/g, " ")
-        .replace(/&nbsp;/gi, " ")
-        .replace(/&amp;/gi, "&")
-        .replace(/&quot;/gi, '"')
-        .replace(/&#39;/gi, "'")
-        .replace(/&lt;/gi, "<")
-        .replace(/&gt;/gi, ">")
-        .replace(/\s+/g, " ")
-        .trim() || "H1_EMPTY";
+function percentage(value, total) {
+  if (!total) return 0;
+  return round((value / total) * 100);
 }
 
 // ==================================================
@@ -177,400 +119,327 @@ function extractH1(html) {
 // ==================================================
 
 export function setup() {
+  console.log("");
+  console.log("==================================================");
+  console.log(`       STAGE ${STAGE} - CONTROLLED LOAD TEST`);
+  console.log("==================================================");
 
-    console.log("==========================================");
-    console.log(`          STAGE ${STAGE} LOAD TEST`);
-    console.log("==========================================");
+  console.log(`Base URL             : ${BASE_URL}`);
+  console.log(`Virtual Users        : ${TOTAL_VUS}`);
+  console.log(`Requests per VU      : ${REQUESTS_PER_VU}`);
+  console.log(`Expected Requests    : ${EXPECTED_TOTAL_REQUESTS}`);
+  console.log(`Request Interval     : ${REQUEST_INTERVAL} seconds`);
+  console.log(`Target Duration      : ${TEST_DURATION_SECONDS} seconds`);
 
-    console.log(`Base URL          : ${BASE_URL}`);
-    console.log(`Virtual Users     : ${TOTAL_VUS}`);
-    console.log(`Duration          : 1 minute`);
-    console.log(`Endpoints         : ${urls.length}`);
-    console.log(`Requests per VU   : ${REQUESTS_PER_VU}`);
-    console.log(`Expected Requests : ${EXPECTED_REQUESTS}`);
-    console.log(
-        `Request Interval : ${REQUEST_INTERVAL.toFixed(2)} seconds`
-    );
+  console.log("");
+  console.log("VU TO ENDPOINT MAPPING");
+  console.log("--------------------------------------------------");
 
-    console.log("------------------------------------------");
-    console.log("VU ENDPOINT ASSIGNMENT");
-    console.log("------------------------------------------");
+  urls.forEach((url, index) => {
+    console.log(`VU ${index + 1} -> ${url}`);
+  });
 
-    for (let i = 0; i < TOTAL_VUS; i++) {
+  console.log("==================================================");
+  console.log("");
 
-        console.log(
-            `VU ${i + 1} -> ${urls[i]}`
-        );
-    }
-
-    console.log("==========================================");
+  return {
+    startedAt: Date.now(),
+  };
 }
 
 // ==================================================
-// 7. MAIN TEST EXECUTION
+// 7. MAIN TEST FUNCTION
 // ==================================================
 
 export default function () {
+  const vu = __VU;
+  const iteration = __ITER + 1;
 
-    // Each VU permanently uses its own endpoint.
-    //
-    // VU 1  -> Endpoint 1
-    // VU 2  -> Endpoint 2
-    // ...
-    // VU 10 -> Endpoint 10
+  // Each VU is assigned exactly one endpoint.
+  const endpointIndex = vu - 1;
+  const endpoint = urls[endpointIndex];
 
-    const endpointIndex = __VU - 1;
+  const requestStart = Date.now();
 
-    const endpoint = urls[endpointIndex];
+  const fullUrl = `${BASE_URL}${endpoint}`;
 
-    const targetURL = `${BASE_URL}${endpoint}`;
+  console.log(
+    `[REQUEST] Stage ${STAGE} | VU ${vu} | ` +
+      `Request ${iteration}/${REQUESTS_PER_VU} | ${endpoint}`,
+  );
 
-    const requestNumber = __ITER + 1;
+  const response = http.get(fullUrl, {
+    // timeout: HTTP_TIMEOUT,
 
-    const iterationStart = Date.now();
+    tags: {
+      stage: `stage_${STAGE}`,
+      endpoint: endpoint,
+      endpoint_number: String(vu),
+      assigned_vu: String(vu),
+    },
+  });
 
-    const timestamp = new Date().toISOString();
+  const elapsed = response.timings.duration;
 
-    console.log("------------------------------------------");
+  totalRequests.add(1);
+  responseTime.add(elapsed);
+  endpointTrends[endpointIndex].metric.add(elapsed);
+
+  const isSuccessful = check(response, {
+    "HTTP status is 200": (r) => r.status === 200,
+  });
+
+  if (isSuccessful) {
+    successfulRequests.add(1);
 
     console.log(
-        `[REQUEST START] ${timestamp} | ` +
-        `STAGE ${STAGE} | ` +
-        `VU ${__VU} | ` +
-        `Request ${requestNumber}/${REQUESTS_PER_VU} | ` +
-        `Endpoint: ${endpoint}`
+      `[SUCCESS] VU ${vu} | ${endpoint} | ` +
+        `Status: ${response.status} | ` +
+        `Response: ${round(elapsed)} ms`,
     );
+  } else {
+    failedRequests.add(1);
 
-    // ----------------------------------------------
-    // HTTP GET REQUEST
-    // ----------------------------------------------
+    console.log(
+      `[FAILED] VU ${vu} | ${endpoint} | ` +
+        `Status: ${response.status} | ` +
+        `Response: ${round(elapsed)} ms`,
+    );
+  }
 
-    const response = http.get(targetURL, {
+  if (response.status === 504) {
+    gateway504Errors.add(1);
+  }
 
-        tags: {
-            stage: String(STAGE),
-            endpoint: endpoint,
-            endpoint_number: String(endpointIndex + 1),
-            assigned_vu: String(__VU),
-            request_number: String(requestNumber),
-        },
-
-        // timeout: HTTP_TIMEOUT,
-    });
-
-    const responseTime = response.timings.duration;
-
-    const h1 = extractH1(response.body);
-
-    const responseTimestamp = new Date().toISOString();
-
-    // ----------------------------------------------
-    // REQUEST COUNTERS
-    // ----------------------------------------------
-
-    requestCounter.add(1, {
-        stage: String(STAGE),
-        endpoint: endpoint,
-        assigned_vu: String(__VU),
-    });
-
-    endpointResponseTime.add(responseTime, {
-        stage: String(STAGE),
-        endpoint: endpoint,
-        assigned_vu: String(__VU),
-    });
-
-    h1Capture.add(responseTime, {
-        stage: String(STAGE),
-        url: endpoint,
-        h1_tag: h1,
-        status: String(response.status),
-        assigned_vu: String(__VU),
-        request_number: String(requestNumber),
-    });
-
-    // ----------------------------------------------
-    // HTTP STATUS CHECK
-    // ----------------------------------------------
-
-    const passed = check(response, {
-
-        "HTTP status is 200": (r) => r.status === 200,
-
-    });
-
-    if (passed) {
-
-        successCounter.add(1);
-
+  if (response.status === 0) {
+    if (response.error && response.error.includes("timeout")) {
+      clientTimeouts.add(1);
     } else {
-
-        failureCounter.add(1);
-
+      transportErrors.add(1);
     }
+  }
 
-    // ----------------------------------------------
-    // ERROR CLASSIFICATION
-    // ----------------------------------------------
+  // Pace requests evenly across approximately 60 seconds.
+  // The interval is measured from the start of this iteration.
+  const iterationElapsed = (Date.now() - requestStart) / 1000;
 
-    const errorMessage = response.error || "";
+  const remainingWait = REQUEST_INTERVAL - iterationElapsed;
 
-    if (response.status === 504) {
+  if (remainingWait > 0 && iteration < REQUESTS_PER_VU) {
+    console.log(`[WAIT] VU ${vu} | Waiting ${round(remainingWait)} seconds`);
 
-        gateway504Counter.add(1);
-
-        console.error(
-            `[504 ERROR] Stage ${STAGE} | ` +
-            `VU ${__VU} | Endpoint ${endpoint} | ` +
-            `${errorMessage}`
-        );
-
-    } else if (response.status === 0) {
-
-        if (/timeout|timed out|deadline exceeded/i.test(errorMessage)) {
-
-            clientTimeoutCounter.add(1);
-
-            console.error(
-                `[TIMEOUT] Stage ${STAGE} | ` +
-                `VU ${__VU} | Endpoint ${endpoint} | ` +
-                `${errorMessage || "Request timed out"}`
-            );
-
-        } else {
-
-            transportErrorCounter.add(1);
-
-            console.error(
-                `[TRANSPORT ERROR] Stage ${STAGE} | ` +
-                `VU ${__VU} | Endpoint ${endpoint} | ` +
-                `${errorMessage || "No HTTP response"}`
-            );
-        }
-
-    } else if (!passed) {
-
-        console.error(
-            `[HTTP ERROR] Stage ${STAGE} | ` +
-            `VU ${__VU} | Endpoint ${endpoint} | ` +
-            `Status ${response.status} | ${errorMessage}`
-        );
-    }
-
-    // ----------------------------------------------
-    // CMD OUTPUT
-    // ----------------------------------------------
-
-    if (passed) {
-
-        console.log(
-            `[SUCCESS] Stage ${STAGE} | ` +
-            `VU ${__VU} | ` +
-            `Status ${response.status} | ` +
-            `Response Time ${responseTime.toFixed(2)} ms`
-        );
-
-    } else {
-
-        console.log(
-            `[FAILED] Stage ${STAGE} | ` +
-            `VU ${__VU} | ` +
-            `Status ${response.status} | ` +
-            `Response Time ${responseTime.toFixed(2)} ms`
-        );
-    }
-
-    console.log(
-        `[H1 TAG] ${endpoint} | ${h1}`
-    );
-
-    console.log(
-        `[RESPONSE TIME] ${responseTimestamp} | ` +
-        `${responseTime.toFixed(2)} ms`
-    );
-
-    // ----------------------------------------------
-    // REQUEST PACING
-    // ----------------------------------------------
-
-    // Spread each VU's requests across 60 seconds.
-    //
-    // Stage 1: 1 request at approximately 0 seconds.
-    // Stage 2: 2 requests at approximately 0, 30 seconds.
-    // Stage 3: 3 requests at approximately 0, 20, 40 seconds.
-    //
-    // The final iteration also waits for the remaining
-    // interval so the test lasts approximately 1 minute.
-
-    const elapsedSeconds =
-        (Date.now() - iterationStart) / 1000;
-
-    const remainingTime =
-        REQUEST_INTERVAL - elapsedSeconds;
-
-    if (remainingTime > 0) {
-
-        console.log(
-            `[WAIT] Stage ${STAGE} | VU ${__VU} | ` +
-            `Waiting ${remainingTime.toFixed(2)} seconds`
-        );
-
-        sleep(remainingTime);
-    }
+    sleep(remainingWait);
+  }
 }
 
 // ==================================================
-// 8. FINAL JSON REPORT
+// 8. FINAL REPORT
 // ==================================================
 
 export function handleSummary(data) {
+  const actualRequests = data.metrics.total_requests?.values?.count || 0;
 
-    function getMetric(name, field) {
+  const successful = data.metrics.successful_requests?.values?.count || 0;
 
-        const metric = data.metrics[name];
+  const failed = data.metrics.failed_requests?.values?.count || 0;
 
-        if (!metric || !metric.values) {
-            return 0;
-        }
+  const errors504 = data.metrics.gateway_504_errors?.values?.count || 0;
 
-        return metric.values[field] ?? 0;
-    }
+  const timeouts = data.metrics.client_timeouts?.values?.count || 0;
 
-    const totalRequests = getMetric(
-        "endpoint_requests",
-        "count"
-    );
+  const transport = data.metrics.transport_errors?.values?.count || 0;
 
-    const successfulRequests = getMetric(
-        "successful_requests",
-        "count"
-    );
+  const actualDuration = data.state.testRunDurationMs / 1000;
 
-    const failedRequests = getMetric(
-        "failed_requests",
-        "count"
-    );
+  const checksRate = data.metrics.checks?.values?.rate || 0;
 
-    const failedRate = totalRequests > 0
-        ? failedRequests / totalRequests
-        : 0;
+  const failedRate = data.metrics.http_req_failed?.values?.rate || 0;
 
-    const checkPassRate = getMetric(
-        "checks",
-        "rate"
-    );
+  const responseStats = {
+    average: getMetricValue(data, "overall_response_time", "avg"),
+    minimum: getMetricValue(data, "overall_response_time", "min"),
+    median: getMetricValue(data, "overall_response_time", "med"),
+    maximum: getMetricValue(data, "overall_response_time", "max"),
+    p90: getMetricValue(data, "overall_response_time", "p(90)"),
+    p95: getMetricValue(data, "overall_response_time", "p(95)"),
+    p99: getMetricValue(data, "overall_response_time", "p(99)"),
+  };
 
-    const report = {
+  const endpointReports = urls.map((url, index) => {
+    const metricName = `endpoint_${index + 1}_response_time`;
 
-        test_name: `Stage ${STAGE} - Endpoint Load Test`,
+    const requestsForEndpoint = data.metrics[metricName]?.values?.count || 0;
 
-        test_configuration: {
-
-            stage: STAGE,
-
-            base_url: BASE_URL,
-
-            virtual_users: TOTAL_VUS,
-
-            duration_seconds: TEST_DURATION_SECONDS,
-
-            total_endpoints: urls.length,
-
-            requests_per_vu: REQUESTS_PER_VU,
-
-            request_interval_seconds: REQUEST_INTERVAL,
-
-            expected_total_requests: EXPECTED_REQUESTS,
-
-            actual_total_requests: totalRequests,
-
-            endpoint_assignment: "One fixed endpoint per VU",
-        },
-
-        request_summary: {
-
-            total_requests: totalRequests,
-
-            successful_requests: successfulRequests,
-
-            failed_requests: failedRequests,
-
-            failed_rate: failedRate,
-
-            check_pass_rate: checkPassRate,
-        },
-
-        error_summary: {
-
-            gateway_504_errors: getMetric(
-                "gateway_504_errors",
-                "count"
-            ),
-
-            client_timeouts: getMetric(
-                "client_timeouts",
-                "count"
-            ),
-
-            transport_errors: getMetric(
-                "transport_errors",
-                "count"
-            ),
-        },
-
-        response_time_ms: {
-
-            average: getMetric("endpoint_response_time", "avg"),
-
-            minimum: getMetric("endpoint_response_time", "min"),
-
-            median: getMetric("endpoint_response_time", "med"),
-
-            maximum: getMetric("endpoint_response_time", "max"),
-
-            p90: getMetric("endpoint_response_time", "p(90)"),
-
-            p95: getMetric("endpoint_response_time", "p(95)"),
-
-            p99: getMetric("endpoint_response_time", "p(99)"),
-        },
-
-        threshold_validation: {
-
-            expected_request_count:
-                totalRequests === EXPECTED_REQUESTS,
-
-            p90_below_1000ms:
-                getMetric("http_req_duration", "p(90)") < 1000,
-
-            p95_below_1000ms:
-                getMetric("http_req_duration", "p(95)") < 1000,
-
-            p99_below_1000ms:
-                getMetric("http_req_duration", "p(99)") < 1000,
-
-            failed_rate_below_1_percent:
-                failedRate < 0.01,
-
-            checks_above_99_percent:
-                checkPassRate > 0.99,
-
-            zero_504_errors:
-                getMetric("gateway_504_errors", "count") === 0,
-
-            zero_client_timeouts:
-                getMetric("client_timeouts", "count") === 0,
-        },
-    };
-
-    const prefix = `stage_${STAGE}`;
+    const endpointSuccess = data.metrics[`http_reqs`]?.values?.count
+      ? null
+      : null;
 
     return {
-
-        [`${prefix}_summary.json`]:
-            JSON.stringify(report, null, 4),
-
-        [`${prefix}_k6_summary.json`]:
-            JSON.stringify(data, null, 4),
+      vu: index + 1,
+      endpoint_number: index + 1,
+      endpoint: url,
+      requests: requestsForEndpoint,
+      response_time_ms: {
+        average: getMetricValue(data, metricName, "avg"),
+        minimum: getMetricValue(data, metricName, "min"),
+        maximum: getMetricValue(data, metricName, "max"),
+        p90: getMetricValue(data, metricName, "p(90)"),
+        p95: getMetricValue(data, metricName, "p(95)"),
+        p99: getMetricValue(data, metricName, "p(99)"),
+      },
     };
+  });
+
+  // Determine threshold results from actual metrics.
+  const thresholdResults = {};
+
+  for (const [metricName, metric] of Object.entries(data.metrics)) {
+    if (metric.thresholds) {
+      for (const [thresholdName, threshold] of Object.entries(
+        metric.thresholds,
+      )) {
+        thresholdResults[`${metricName}: ${thresholdName}`] = threshold.ok
+          ? "PASS"
+          : "FAIL";
+      }
+    }
+  }
+
+  const expectedCountPass = actualRequests === EXPECTED_TOTAL_REQUESTS;
+
+  const summary = {
+    test_name: `Stage ${STAGE} - Controlled Load Test`,
+
+    test_configuration: {
+      base_url: BASE_URL,
+      stage: STAGE,
+      total_endpoints: urls.length,
+      virtual_users: TOTAL_VUS,
+      requests_per_vu: REQUESTS_PER_VU,
+      request_interval_seconds: REQUEST_INTERVAL,
+      target_duration_seconds: TEST_DURATION_SECONDS,
+      actual_duration_seconds: round(actualDuration),
+      expected_total_requests: EXPECTED_TOTAL_REQUESTS,
+      actual_total_requests: actualRequests,
+
+      vu_endpoint_mapping: urls.map((endpoint, index) => ({
+        vu: index + 1,
+        endpoint_number: index + 1,
+        endpoint: endpoint,
+        expected_requests: REQUESTS_PER_VU,
+      })),
+    },
+
+    request_summary: {
+      total_requests: actualRequests,
+      successful_requests: successful,
+      failed_requests: failed,
+      success_rate_percent: percentage(successful, actualRequests),
+      failed_rate_percent: percentage(failed, actualRequests),
+      check_pass_rate_percent: round(checksRate * 100),
+    },
+
+    error_summary: {
+      gateway_504_errors: errors504,
+      client_timeouts: timeouts,
+      transport_errors: transport,
+    },
+
+    overall_response_time_ms: responseStats,
+
+    endpoint_wise_performance: endpointReports,
+
+    threshold_validation: {
+      expected_request_count: expectedCountPass ? "PASS" : "FAIL",
+
+      ...thresholdResults,
+    },
+  };
+
+  // Human-readable console report.
+  let output = "";
+
+  function line(value = "") {
+    output += value + "\n";
+  }
+
+  function heading(value) {
+    line("");
+    line("==================================================");
+    line(value);
+    line("==================================================");
+  }
+
+  heading(`STAGE ${STAGE} FINAL REPORT`);
+
+  line("1. TEST CONFIGURATION");
+  line("--------------------------------------------------");
+  line(`Base URL                 : ${BASE_URL}`);
+  line(`Virtual Users            : ${TOTAL_VUS}`);
+  line(`Requests per VU          : ${REQUESTS_PER_VU}`);
+  line(`Expected Requests        : ${EXPECTED_TOTAL_REQUESTS}`);
+  line(`Actual Requests          : ${actualRequests}`);
+  line(`Target Duration          : ${TEST_DURATION_SECONDS} seconds`);
+  line(`Actual Duration          : ${round(actualDuration)} seconds`);
+
+  heading("2. REQUEST SUMMARY");
+
+  line(`Total Requests           : ${actualRequests}`);
+  line(`Successful Requests      : ${successful}`);
+  line(`Failed Requests          : ${failed}`);
+  line(`Success Rate             : ${percentage(successful, actualRequests)}%`);
+  line(`Failure Rate             : ${percentage(failed, actualRequests)}%`);
+  line(`Check Pass Rate          : ${round(checksRate * 100)}%`);
+
+  heading("3. ERROR SUMMARY");
+
+  line(`Gateway 504 Errors       : ${errors504}`);
+  line(`Client Timeouts          : ${timeouts}`);
+  line(`Transport Errors         : ${transport}`);
+
+  heading("4. OVERALL RESPONSE TIME (ms)");
+
+  line(`Average                  : ${responseStats.average}`);
+  line(`Minimum                  : ${responseStats.minimum}`);
+  line(`Median                   : ${responseStats.median}`);
+  line(`Maximum                  : ${responseStats.maximum}`);
+  line(`P90                      : ${responseStats.p90}`);
+  line(`P95                      : ${responseStats.p95}`);
+  line(`P99                      : ${responseStats.p99}`);
+
+  heading("5. ENDPOINT-WISE PERFORMANCE");
+
+  line("VU | Requests | Average(ms) | Minimum(ms) | Maximum(ms) | P95(ms)");
+
+  line("--------------------------------------------------");
+
+  endpointReports.forEach((item) => {
+    const r = item.response_time_ms;
+
+    line(
+      `${item.vu} | ${item.requests} | ` +
+        `${r.average} | ${r.minimum} | ${r.maximum} | ${r.p95}`,
+    );
+
+    line(`   Endpoint: ${item.endpoint}`);
+  });
+
+  heading("6. THRESHOLD VALIDATION");
+
+  line(`Expected Request Count   : ${expectedCountPass ? "PASS" : "FAIL"}`);
+
+  for (const [name, status] of Object.entries(thresholdResults)) {
+    line(`${name} : ${status}`);
+  }
+
+  heading("END OF REPORT");
+
+  const jsonOutput = JSON.stringify(summary, null, 4);
+
+  console.log(output);
+
+  return {
+    stdout: output,
+    [`stage_${STAGE}_summary.json`]: jsonOutput,
+  };
 }
