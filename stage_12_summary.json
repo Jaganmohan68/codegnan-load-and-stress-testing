@@ -1,0 +1,251 @@
+{
+    "test_name": "Stage 12 - Controlled Load Test",
+    "test_configuration": {
+        "base_url": "https://staging.codegnan.com",
+        "stage": 12,
+        "total_endpoints": 10,
+        "virtual_users": 10,
+        "requests_per_vu": 12,
+        "request_interval_seconds": 5,
+        "target_duration_seconds": 60,
+        "actual_duration_seconds": 85.77,
+        "expected_total_requests": 120,
+        "actual_total_requests": 120,
+        "vu_endpoint_mapping": [
+            {
+                "vu": 1,
+                "endpoint_number": 1,
+                "endpoint": "/full-stack-java-training-course-in-vijayawada/",
+                "expected_requests": 12
+            },
+            {
+                "vu": 2,
+                "endpoint_number": 2,
+                "endpoint": "/java-full-stack-course-in-visakhapatnam/",
+                "expected_requests": 12
+            },
+            {
+                "vu": 3,
+                "endpoint_number": 3,
+                "endpoint": "/full-stack-java-training-course-in-hyderabad/",
+                "expected_requests": 12
+            },
+            {
+                "vu": 4,
+                "endpoint_number": 4,
+                "endpoint": "/python-full-stack-training-course-in-vijayawada/",
+                "expected_requests": 12
+            },
+            {
+                "vu": 5,
+                "endpoint_number": 5,
+                "endpoint": "/python-full-stack-course-in-visakhapatnam/",
+                "expected_requests": 12
+            },
+            {
+                "vu": 6,
+                "endpoint_number": 6,
+                "endpoint": "/python-full-stack-developer-course-in-hyderabad/",
+                "expected_requests": 12
+            },
+            {
+                "vu": 7,
+                "endpoint_number": 7,
+                "endpoint": "/data-analytics-course-in-vijayawada/",
+                "expected_requests": 12
+            },
+            {
+                "vu": 8,
+                "endpoint_number": 8,
+                "endpoint": "/data-analytics-course-in-visakhapatnam/",
+                "expected_requests": 12
+            },
+            {
+                "vu": 9,
+                "endpoint_number": 9,
+                "endpoint": "/data-analytics-course-in-hyderabad/",
+                "expected_requests": 12
+            },
+            {
+                "vu": 10,
+                "endpoint_number": 10,
+                "endpoint": "/courses/data-science-with-agentic-ai-course-in-vijayawada/",
+                "expected_requests": 12
+            }
+        ]
+    },
+    "request_summary": {
+        "total_requests": 120,
+        "successful_requests": 120,
+        "failed_requests": 0,
+        "success_rate_percent": 100,
+        "failed_rate_percent": 0,
+        "check_pass_rate_percent": 100
+    },
+    "error_summary": {
+        "gateway_504_errors": 0,
+        "client_timeouts": 0,
+        "transport_errors": 0
+    },
+    "overall_response_time_ms": {
+        "average": 1279.64,
+        "minimum": 89.56,
+        "median": 341.31,
+        "maximum": 35404.54,
+        "p90": 600.92,
+        "p95": 854.53,
+        "p99": 33146.02
+    },
+    "endpoint_wise_performance": [
+        {
+            "vu": 1,
+            "endpoint_number": 1,
+            "endpoint": "/full-stack-java-training-course-in-vijayawada/",
+            "requests": 0,
+            "response_time_ms": {
+                "average": 316.39,
+                "minimum": 139.29,
+                "maximum": 1052.46,
+                "p90": 443.43,
+                "p95": 727.85,
+                "p99": 987.53
+            }
+        },
+        {
+            "vu": 2,
+            "endpoint_number": 2,
+            "endpoint": "/java-full-stack-course-in-visakhapatnam/",
+            "requests": 0,
+            "response_time_ms": {
+                "average": 437.12,
+                "minimum": 231.07,
+                "maximum": 645.74,
+                "p90": 556.49,
+                "p95": 598.94,
+                "p99": 636.38
+            }
+        },
+        {
+            "vu": 3,
+            "endpoint_number": 3,
+            "endpoint": "/full-stack-java-training-course-in-hyderabad/",
+            "requests": 0,
+            "response_time_ms": {
+                "average": 404.35,
+                "minimum": 316.94,
+                "maximum": 558.72,
+                "p90": 551.12,
+                "p95": 557.65,
+                "p99": 558.51
+            }
+        },
+        {
+            "vu": 4,
+            "endpoint_number": 4,
+            "endpoint": "/python-full-stack-training-course-in-vijayawada/",
+            "requests": 0,
+            "response_time_ms": {
+                "average": 1473.4,
+                "minimum": 153.54,
+                "maximum": 14786.71,
+                "p90": 457.23,
+                "p95": 6910.5,
+                "p99": 13211.47
+            }
+        },
+        {
+            "vu": 5,
+            "endpoint_number": 5,
+            "endpoint": "/python-full-stack-course-in-visakhapatnam/",
+            "requests": 0,
+            "response_time_ms": {
+                "average": 636.13,
+                "minimum": 422.5,
+                "maximum": 950.41,
+                "p90": 848.12,
+                "p95": 894.9,
+                "p99": 939.31
+            }
+        },
+        {
+            "vu": 6,
+            "endpoint_number": 6,
+            "endpoint": "/python-full-stack-developer-course-in-hyderabad/",
+            "requests": 0,
+            "response_time_ms": {
+                "average": 373.29,
+                "minimum": 276.16,
+                "maximum": 561.23,
+                "p90": 513.3,
+                "p95": 536.36,
+                "p99": 556.26
+            }
+        },
+        {
+            "vu": 7,
+            "endpoint_number": 7,
+            "endpoint": "/data-analytics-course-in-vijayawada/",
+            "requests": 0,
+            "response_time_ms": {
+                "average": 406.26,
+                "minimum": 207.74,
+                "maximum": 595.94,
+                "p90": 565.62,
+                "p95": 581.54,
+                "p99": 593.06
+            }
+        },
+        {
+            "vu": 8,
+            "endpoint_number": 8,
+            "endpoint": "/data-analytics-course-in-visakhapatnam/",
+            "requests": 0,
+            "response_time_ms": {
+                "average": 2226.37,
+                "minimum": 89.56,
+                "maximum": 23517.56,
+                "p90": 494.62,
+                "p95": 10856.58,
+                "p99": 20985.37
+            }
+        },
+        {
+            "vu": 9,
+            "endpoint_number": 9,
+            "endpoint": "/data-analytics-course-in-hyderabad/",
+            "requests": 0,
+            "response_time_ms": {
+                "average": 3270.43,
+                "minimum": 194.28,
+                "maximum": 35404.54,
+                "p90": 527.88,
+                "p95": 16225.01,
+                "p99": 31568.64
+            }
+        },
+        {
+            "vu": 10,
+            "endpoint_number": 10,
+            "endpoint": "/courses/data-science-with-agentic-ai-course-in-vijayawada/",
+            "requests": 0,
+            "response_time_ms": {
+                "average": 3252.65,
+                "minimum": 190.91,
+                "maximum": 35404.54,
+                "p90": 525.78,
+                "p95": 16223.36,
+                "p99": 31568.31
+            }
+        }
+    ],
+    "threshold_validation": {
+        "expected_request_count": "PASS",
+        "http_req_failed: rate<0.01": "PASS",
+        "checks: rate>0.99": "PASS",
+        "gateway_504_errors: count==0": "PASS",
+        "client_timeouts: count==0": "PASS",
+        "http_req_duration: p(90)<1000": "PASS",
+        "http_req_duration: p(95)<1000": "PASS",
+        "http_req_duration: p(99)<1000": "FAIL"
+    }
+}

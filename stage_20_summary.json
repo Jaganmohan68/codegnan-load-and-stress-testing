@@ -1,0 +1,251 @@
+{
+    "test_name": "Stage 20 - Controlled Load Test",
+    "test_configuration": {
+        "base_url": "https://staging.codegnan.com",
+        "stage": 20,
+        "total_endpoints": 10,
+        "virtual_users": 10,
+        "requests_per_vu": 20,
+        "request_interval_seconds": 3,
+        "target_duration_seconds": 60,
+        "actual_duration_seconds": 114.53,
+        "expected_total_requests": 200,
+        "actual_total_requests": 200,
+        "vu_endpoint_mapping": [
+            {
+                "vu": 1,
+                "endpoint_number": 1,
+                "endpoint": "/testimonials/",
+                "expected_requests": 20
+            },
+            {
+                "vu": 2,
+                "endpoint_number": 2,
+                "endpoint": "/bangalore/",
+                "expected_requests": 20
+            },
+            {
+                "vu": 3,
+                "endpoint_number": 3,
+                "endpoint": "/learn-software-testing/",
+                "expected_requests": 20
+            },
+            {
+                "vu": 4,
+                "endpoint_number": 4,
+                "endpoint": "/sairam-uppugundla/",
+                "expected_requests": 20
+            },
+            {
+                "vu": 5,
+                "endpoint_number": 5,
+                "endpoint": "/kishor-kumar/",
+                "expected_requests": 20
+            },
+            {
+                "vu": 6,
+                "endpoint_number": 6,
+                "endpoint": "/learn-data-science/",
+                "expected_requests": 20
+            },
+            {
+                "vu": 7,
+                "endpoint_number": 7,
+                "endpoint": "/refunds-cancellations/",
+                "expected_requests": 20
+            },
+            {
+                "vu": 8,
+                "endpoint_number": 8,
+                "endpoint": "/jitendra-chautharia/",
+                "expected_requests": 20
+            },
+            {
+                "vu": 9,
+                "endpoint_number": 9,
+                "endpoint": "/learn-machine-learning/",
+                "expected_requests": 20
+            },
+            {
+                "vu": 10,
+                "endpoint_number": 10,
+                "endpoint": "/our-team/",
+                "expected_requests": 20
+            }
+        ]
+    },
+    "request_summary": {
+        "total_requests": 200,
+        "successful_requests": 198,
+        "failed_requests": 2,
+        "success_rate_percent": 99,
+        "failed_rate_percent": 1,
+        "check_pass_rate_percent": 99
+    },
+    "error_summary": {
+        "gateway_504_errors": 0,
+        "client_timeouts": 2,
+        "transport_errors": 0
+    },
+    "overall_response_time_ms": {
+        "average": 304.67,
+        "minimum": 0,
+        "median": 265.34,
+        "maximum": 1623.74,
+        "p90": 441.46,
+        "p95": 539.57,
+        "p99": 1033.68
+    },
+    "endpoint_wise_performance": [
+        {
+            "vu": 1,
+            "endpoint_number": 1,
+            "endpoint": "/testimonials/",
+            "requests": 0,
+            "response_time_ms": {
+                "average": 321.7,
+                "minimum": 162.61,
+                "maximum": 839.17,
+                "p90": 339.41,
+                "p95": 540.07,
+                "p99": 779.35
+            }
+        },
+        {
+            "vu": 2,
+            "endpoint_number": 2,
+            "endpoint": "/bangalore/",
+            "requests": 0,
+            "response_time_ms": {
+                "average": 279.33,
+                "minimum": 172.14,
+                "maximum": 829.3,
+                "p90": 305.54,
+                "p95": 460.61,
+                "p99": 755.56
+            }
+        },
+        {
+            "vu": 3,
+            "endpoint_number": 3,
+            "endpoint": "/learn-software-testing/",
+            "requests": 0,
+            "response_time_ms": {
+                "average": 334.99,
+                "minimum": 0,
+                "maximum": 1623.74,
+                "p90": 464.38,
+                "p95": 557.82,
+                "p99": 1410.55
+            }
+        },
+        {
+            "vu": 4,
+            "endpoint_number": 4,
+            "endpoint": "/sairam-uppugundla/",
+            "requests": 0,
+            "response_time_ms": {
+                "average": 311.94,
+                "minimum": 166.05,
+                "maximum": 856.29,
+                "p90": 346.2,
+                "p95": 492.99,
+                "p99": 783.63
+            }
+        },
+        {
+            "vu": 5,
+            "endpoint_number": 5,
+            "endpoint": "/kishor-kumar/",
+            "requests": 0,
+            "response_time_ms": {
+                "average": 289.29,
+                "minimum": 129.12,
+                "maximum": 852.17,
+                "p90": 303.34,
+                "p95": 476.88,
+                "p99": 777.11
+            }
+        },
+        {
+            "vu": 6,
+            "endpoint_number": 6,
+            "endpoint": "/learn-data-science/",
+            "requests": 0,
+            "response_time_ms": {
+                "average": 292.24,
+                "minimum": 156.93,
+                "maximum": 836.89,
+                "p90": 316.88,
+                "p95": 463.37,
+                "p99": 762.19
+            }
+        },
+        {
+            "vu": 7,
+            "endpoint_number": 7,
+            "endpoint": "/refunds-cancellations/",
+            "requests": 0,
+            "response_time_ms": {
+                "average": 315.97,
+                "minimum": 169.86,
+                "maximum": 1029.67,
+                "p90": 329.9,
+                "p95": 495.99,
+                "p99": 922.93
+            }
+        },
+        {
+            "vu": 8,
+            "endpoint_number": 8,
+            "endpoint": "/jitendra-chautharia/",
+            "requests": 0,
+            "response_time_ms": {
+                "average": 294.57,
+                "minimum": 117.78,
+                "maximum": 845.91,
+                "p90": 322.23,
+                "p95": 532.67,
+                "p99": 783.26
+            }
+        },
+        {
+            "vu": 9,
+            "endpoint_number": 9,
+            "endpoint": "/learn-machine-learning/",
+            "requests": 0,
+            "response_time_ms": {
+                "average": 298.24,
+                "minimum": 0,
+                "maximum": 1326.52,
+                "p90": 420.64,
+                "p95": 545.74,
+                "p99": 1170.37
+            }
+        },
+        {
+            "vu": 10,
+            "endpoint_number": 10,
+            "endpoint": "/our-team/",
+            "requests": 0,
+            "response_time_ms": {
+                "average": 308.45,
+                "minimum": 103.1,
+                "maximum": 1030.72,
+                "p90": 331.16,
+                "p95": 493.96,
+                "p99": 923.37
+            }
+        }
+    ],
+    "threshold_validation": {
+        "expected_request_count": "PASS",
+        "checks: rate>0.99": "FAIL",
+        "gateway_504_errors: count==0": "PASS",
+        "http_req_failed: rate<0.01": "FAIL",
+        "client_timeouts: count==0": "FAIL",
+        "http_req_duration: p(90)<1000": "PASS",
+        "http_req_duration: p(95)<1000": "PASS",
+        "http_req_duration: p(99)<1000": "FAIL"
+    }
+}

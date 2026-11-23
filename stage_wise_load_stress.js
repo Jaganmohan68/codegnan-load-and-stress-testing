@@ -6,6 +6,7 @@ const BASE_URL = "https://staging.codegnan.com";
 
 const TOTAL_VUS = 10;
 const TEST_DURATION_SECONDS = 60;
+// const TEST_DURATION_SECONDS = 300; // 5m
 // const HTTP_TIMEOUT = "30s";
 
 const STAGE = Number(__ENV.STAGE || 1);
@@ -20,16 +21,43 @@ const EXPECTED_TOTAL_REQUESTS = TOTAL_VUS * REQUESTS_PER_VU;
 const REQUEST_INTERVAL = TEST_DURATION_SECONDS / REQUESTS_PER_VU;
 
 const urls = [
-  "/testimonials/",
-  "/bangalore/",
-  "/learn-software-testing/",
-  "/sairam-uppugundla/",
-  "/kishor-kumar/",
-  "/learn-data-science/",
-  "/refunds-cancellations/",
-  "/jitendra-chautharia/",
-  "/learn-machine-learning/",
-  "/our-team/",
+
+ "/full-stack-java-training-course-in-vijayawada/",
+ "/java-full-stack-course-in-visakhapatnam/",
+ "/full-stack-java-training-course-in-hyderabad/",
+ "/python-full-stack-training-course-in-vijayawada/",
+ "/python-full-stack-course-in-visakhapatnam/",
+ "/python-full-stack-developer-course-in-hyderabad/",
+ "/data-analytics-course-in-vijayawada/",
+ "/data-analytics-course-in-visakhapatnam/",
+ "/data-analytics-course-in-hyderabad/",
+ "/courses/data-science-with-agentic-ai-course-in-vijayawada/",
+//  "/courses/data-science-with-agentic-ai-course-in-hyderabad/",
+//  "/courses/data-science-with-agentic-ai-course-in-visakhapatnam/",
+//  "/courses/career-restart-full-stack-software-engineering-program/",  // need to verify the endpoint
+//  "/job-accelerator-program/"
+
+  // "/testimonials/",
+  // "/bangalore/",
+  // "/learn-software-testing/",
+  // "/sairam-uppugundla/",
+  // "/kishor-kumar/",
+  // "/learn-data-science/",
+  // "/refunds-cancellations/",
+  // "/jitendra-chautharia/",
+  // "/learn-machine-learning/",
+  // "/our-team/",
+
+    // "/terms-and-conditions/",
+    // "/sai-vardhan-python-full-stack-mentor-at-codegnan/",
+    // "/saketh-kallepu/",
+    // "/manohar-chary-vadla/",
+    // "/ravi-siva-ram-teja/",
+    // "/privacy-policy/",
+    // "/cancellation-policy/",
+    // "/refund-policy/",
+    // "/terms-conditions/",
+    // "/learn-python/",
 ];
 
 if (urls.length !== TOTAL_VUS) {
@@ -443,3 +471,7 @@ export function handleSummary(data) {
     [`stage_${STAGE}_summary.json`]: jsonOutput,
   };
 }
+
+
+
+// k6 run -e STAGE=10 stage_wise_load_stress.js  -- used to run the scripts in stage wise
