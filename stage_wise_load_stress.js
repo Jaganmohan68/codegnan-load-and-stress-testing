@@ -9,6 +9,7 @@ const TEST_DURATION_SECONDS = 60;
 // const TEST_DURATION_SECONDS = 300; // 5m
 // const HTTP_TIMEOUT = "30s";
 
+
 const STAGE = Number(__ENV.STAGE || 1);
 
 if (!Number.isInteger(STAGE) || STAGE < 1) {

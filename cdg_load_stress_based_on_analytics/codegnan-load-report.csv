@@ -1,0 +1,5 @@
+Stage,Date,Virtual Users,Duration (min),Requests per VU,Endpoint,Expected Requests,Actual Requests,Request Count Check,Failed Requests,Failed Rate,Check Pass Rate,504 Errors,Client Timeouts,Avg (ms),Median (ms),p90 (ms),p95 (ms),p99 (ms),Max (ms),Threshold Status (info only),Desktop Browser Load (Yes/No),Mobile Load (Yes/No),Result (Page Load)
+"S1 - Paced (1 req / 2.4s)","2026-11-28","7","1","1","/","7","7","PASS","0","0.00%","95.24%","0","0","361.59","228.37","628.11","905.47","1127.36","1182.83","BREACHED","Yes","Yes","PASS"
+"S1 - Paced (1 req / 2.4s)","2026-11-28","6","1","1","/job-accelerator-program/","6","6","PASS","0","0.00%","100.00%","0","0","213.82","212.15","244.78","260.71","273.46","276.65","PASS","Yes","Yes","PASS"
+"S1 - Paced (1 req / 2.4s)","2026-11-28","6","1","1","/placement/","6","6","PASS","0","0.00%","100.00%","0","0","161.75","160.41","174.27","177.93","180.86","181.59","PASS","Yes","Yes","PASS"
+"S1 - Paced (1 req / 2.4s)","2026-11-28","6","1","1","/full-stack-java-training-course-in-vijayawada/","6","6","PASS","0","0.00%","100.00%","0","0","251.58","245.50","302.69","311.10","317.82","319.50","PASS","Yes","Yes","PASS"
